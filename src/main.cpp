@@ -29,6 +29,18 @@ int32_t main()
         FinOrdSolver solver(n, queries);
         std::cout << "SAT!" << std::endl;
         std::cout << solver.getGreatestElement() << std::endl;
+        std::cout << solver.getLeastElement() << std::endl;
+        
+        for (auto &it : solver.getMaximumElements()) {
+            std::cout << it << " ";
+        }
+        std::cout << std::endl;
+
+        for (auto &it : solver.getMinimumElements()) {
+            std::cout << it << " ";
+        }
+        std::cout << std::endl;
+
     }
     catch(const AntisymmetryException& e) {
         std::cout << "Not SAT!" << std::endl;

@@ -21,6 +21,9 @@ FinOrdSolver::FinOrdSolver(size_t elementsCount, const std::vector<std::pair<int
         for (size_t i = 0; i < elementsCount; ++i)
         {
             elements[i] = solver.mkConst(elementSort, std::to_string(i));
+            Term reflection = solver.mkTuple({elementSort, elementSort}, 
+                                             {elements[i], elements[i]});
+            solver.assertFormula(solver.mkTerm(SET_MEMBER, reflection, binaryRelation));
         }
 
         for (auto &it : queries) {
@@ -29,7 +32,7 @@ FinOrdSolver::FinOrdSolver(size_t elementsCount, const std::vector<std::pair<int
             Term forbiddenRelation = solver.mkTuple({elementSort, elementSort},
                                             {elements[it.second], elements[it.first]});
 
-            Term existMember = solver.mkTerm(SET_MEMBER, existsRelation, binaryRelationClosure);
+            Term existMember = solver.mkTerm(SET_MEMBER, existsRelation, binaryRelation);
 
             Term forbiddenMember = solver.mkTerm(SET_MEMBER, forbiddenRelation, binaryRelationClosure);
             Term notForbiddenMember = solver.mkTerm(NOT, forbiddenMember);
@@ -48,44 +51,61 @@ FinOrdSolver::FinOrdSolver(size_t elementsCount, const std::vector<std::pair<int
 
 int32_t FinOrdSolver::getGreatestElement() const
 {
-    // EXISTS x: FORALL y : (x, y) IN binaryRelationClosure
-
-    Term existsVar = solver.mkVar(elementSort, "x");
-    Term forallVar = solver.mkVar(elementSort, "y");
-
-    Term instancedVar = solver.mkTerm(INST_PATTERN_LIST, solver.mkTerm(INST_PATTERN, elements));
-
-    // (x, y) in binaryRelationClosure
-    Term commonElementPair = solver.mkTuple({elementSort, elementSort}, {forallVar, existsVar});
-    Term binaryRelationClosure = solver.mkTerm(RELATION_TCLOSURE, binaryRelation);
-    Term leastElement = solver.mkTerm(SET_MEMBER, commonElementPair, binaryRelationClosure);
-
-    // FORALL y
-    Term quantifiedForallVar = solver.mkTerm(VARIABLE_LIST, forallVar);
-    Term forallElement = solver.mkTerm(FORALL, quantifiedForallVar, leastElement);//, instancedVar);
-
-    // EXISTS x
-    Term quantifiedExistsVar = solver.mkTerm(VARIABLE_LIST, existsVar);
-    Term existsElement = solver.mkTerm(EXISTS, quantifiedExistsVar, forallElement, instancedVar);
-    
-    Result result = solver.checkSatAssuming(existsElement);
-    std::cout << existsElement << std::endl;
-    return result.isSat();
+    std::vector<int32_t> result = getMaximumElements();
+    return result.size() == 1 ? result[0] : -1;
 }
 
 int32_t FinOrdSolver::getLeastElement() const
 {
-    return 0;
+    std::vector<int32_t> result = getMinimumElements();
+    return result.size() == 1 ? result[0] : -1;
 }
 
-int32_t FinOrdSolver::getMaximumElement() const
+std::vector<int32_t> FinOrdSolver::getMaximumElements() const
 {
-    return 0;
+    std::vector<int32_t> result;
+
+    for (auto &assumedElement : elements) {
+        std::vector<Term> assertions;
+
+        for (auto &element : elements) {
+            if (element == assumedElement) {
+                continue;
+            }
+
+            Term relation = solver.mkTuple({elementSort, elementSort}, {assumedElement, element});
+            assertions.push_back(solver.mkTerm(NOT, solver.mkTerm(SET_MEMBER, relation, binaryRelation)));
+        }
+
+        if (solver.checkSatAssuming(assertions).isSat()) {
+            result.push_back(std::stoi(assumedElement.getSymbol()));
+        }
+    }
+
+    return result;
 }
 
-int32_t FinOrdSolver::getMinimumElement() const
+std::vector<int32_t> FinOrdSolver::getMinimumElements() const
 {
-    return 0;
+    std::vector<int32_t> result;
+
+    for (auto &assumedElement : elements) {
+        std::vector<Term> assertions;
+
+        for (auto &element : elements) {
+            if (element == assumedElement) {
+                continue;
+            }
+            Term relation = solver.mkTuple({elementSort, elementSort}, {element, assumedElement});
+            assertions.push_back(solver.mkTerm(NOT, solver.mkTerm(SET_MEMBER, relation, binaryRelation)));
+        }
+
+        if (solver.checkSatAssuming(assertions).isSat()) {
+            result.push_back(std::stoi(assumedElement.getSymbol()));
+        }
+    }
+
+    return result;
 }
 
 bool FinOrdSolver::isLinear() const
