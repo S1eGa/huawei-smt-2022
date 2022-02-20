@@ -41,6 +41,7 @@ int32_t main()
         }
         std::cout << std::endl;
 
+        std::cout << solver.isLinear() << std::endl;
     }
     catch(const AntisymmetryException& e) {
         std::cout << "Not SAT!" << std::endl;

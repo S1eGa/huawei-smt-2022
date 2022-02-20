@@ -12,7 +12,6 @@ private:
     cvc5::api::Sort elementSort;
     std::vector<cvc5::api::Term> elements;
 
-    cvc5::api::Sort binaryRelationSort;
     cvc5::api::Term binaryRelation;
 
 public:
