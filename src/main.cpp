@@ -79,4 +79,5 @@ int32_t main()
         }
         std::cout << std::endl;
     }
+    return 0;
 }
