@@ -8,10 +8,12 @@ int32_t main()
 {
     if (!std::freopen("input.txt", "r", stdin))
     {
+        std::cerr << "Can not open file input.txt" << std::endl;
         return 1;
     }
     if (!std::freopen("output.txt", "w", stdout))
     {
+        std::cerr << "Can not open file output.txt" << std::endl;
         return 1;
     }
 
@@ -29,9 +31,26 @@ int32_t main()
     try
     {
         FinOrdSolver solver(n, queries);
-        std::cout << "SAT!" << std::endl;
-        std::cout << solver.getGreatestElement() << std::endl;
-        std::cout << solver.getLeastElement() << std::endl;
+
+        int32_t greatestElement = solver.getGreatestElement();
+        if (greatestElement == -1)
+        {
+            std::cout << "greatest not exist" << std::endl;
+        }
+        else
+        {
+            std::cout << greatestElement << std::endl;
+        }
+
+        int32_t leastElement = solver.getLeastElement();
+        if (leastElement == -1)
+        {
+            std::cout << "least not exist" << std::endl;
+        }
+        else
+        {
+            std::cout << leastElement << std::endl;
+        }
 
         for (auto &it : solver.getMaximumElements())
         {
@@ -54,6 +73,10 @@ int32_t main()
     }
     catch (const AntisymmetryException &e)
     {
-        std::cout << "Not SAT!" << std::endl;
+        for (auto &it : e.getErrorElements())
+        {
+            std::cout << it << " ";
+        }
+        std::cout << std::endl;
     }
 }

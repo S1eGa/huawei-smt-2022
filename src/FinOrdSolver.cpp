@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <regex>
 
 using namespace cvc5::api;
 
@@ -65,7 +66,26 @@ FinOrdSolver::FinOrdSolver(size_t elementsSize, const std::vector<std::pair<int3
     Result result = solver.checkSat();
     if (result.isUnsat())
     {
-        throw AntisymmetryException("Doesn't correspond antisymmetry properties");
+        std::set<int32_t> errorUniqueElements;
+
+        std::regex varNameRegex("\\|\\d*\\|");
+        std::smatch matchResult;
+        for (auto &it : solver.getUnsatCore())
+        {
+
+            // In case regex_search can not take
+            // temporary strings
+            std::string line = it.toString();
+            if (std::regex_search(line, matchResult, varNameRegex))
+            {
+                for (auto &regIt : matchResult)
+                {
+                    errorUniqueElements.insert(std::stoi(regIt.str().substr(1)));
+                }
+            }
+        }
+
+        throw AntisymmetryException(std::vector<int32_t>(errorUniqueElements.begin(), errorUniqueElements.end()));
     }
 }
 
